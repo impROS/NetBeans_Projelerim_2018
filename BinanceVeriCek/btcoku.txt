@@ -1,0 +1,134 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package binancevericek;
+
+import com.google.gson.Gson;
+import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class BinanceVeriCek extends TimerTask {
+
+    public static ArrayList<String> arrKoinler;
+
+    public static ArrayList<String> arrKoinFiyat1 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat2 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat3 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat4 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat5 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat6 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat7 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat8 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat9 = new ArrayList<>();
+    public static ArrayList<String> arrKoinFiyat10 = new ArrayList<>();
+    public static ArrayList<ArrayList> arrKoinFiyatlari;
+
+    public static void main(String[] args) {
+        arrKoinFiyatlari = new ArrayList<>();
+        arrKoinFiyatlari.add(arrKoinFiyat1);
+        arrKoinFiyatlari.add(arrKoinFiyat2);
+        arrKoinFiyatlari.add(arrKoinFiyat3);
+        arrKoinFiyatlari.add(arrKoinFiyat4);
+        arrKoinFiyatlari.add(arrKoinFiyat5);
+        arrKoinFiyatlari.add(arrKoinFiyat6);
+        arrKoinFiyatlari.add(arrKoinFiyat7);
+        arrKoinFiyatlari.add(arrKoinFiyat8);
+        arrKoinFiyatlari.add(arrKoinFiyat9);
+        arrKoinFiyatlari.add(arrKoinFiyat10);
+
+        arrKoinler = new ArrayList<>();
+        arrKoinler.add("BTCUSDT");
+        arrKoinler.add("BTCUSDT");
+        arrKoinler.add("BTCUSDT");
+        arrKoinler.add("BTCUSDT");
+
+        TimerTask timerTask = new BinanceVeriCek();
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(timerTask, 0, 1000);
+        System.out.println("TimerTask started");
+        System.out.println("TimerTask cancelled");
+        try {
+               dosyayaYaz();
+            Thread.sleep(5000);
+        } catch (InterruptedException | IOException ex) {
+            System.err.println("Hata : " + ex.getMessage());
+            timer.cancel();
+
+        }
+    }
+
+    public static void dosyayaYaz() throws IOException {
+        for (int i = 0; i < arrKoinler.size(); i++) {
+            FileWriter writer = new FileWriter(arrKoinler.get(i) + "_" + arrKoinFiyatlari.get(i).size() + ".txt");
+            try {
+                ArrayList<String> tmpArr = arrKoinFiyatlari.get(i);
+                for (String str : tmpArr) {
+                    writer.write(str);
+                }
+            } catch (IOException ex) {
+                System.err.println("Hata : " + ex.getMessage());
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    System.err.println("Hata : " + ex.getMessage());
+
+                }
+            }
+        }
+
+    }
+
+    public static String urlOku(String strUrl) {
+        String strRawData = "", inputLine = "";
+        try {
+
+            URL oracle = new URL(strUrl);
+            HttpURLConnection httpcon = (HttpURLConnection) oracle.openConnection();
+            httpcon.addRequestProperty("User-Agent", "Mozilla/4.0");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(httpcon.getInputStream()));
+            while ((inputLine = in.readLine()) != null) {
+                strRawData += inputLine;
+            }
+            in.close();
+        } catch (Exception ex) {
+
+        }
+
+        return strRawData;
+    }
+
+    @Override
+    public void run() {
+        for (int i = 0; i < arrKoinler.size(); i++) {
+            String strCoin = new BinanceVeriCek().urlOku("https://api.binance.com/api/v1/ticker/price?symbol=" + arrKoinler.get(i));
+            Coin tmpCoin = new Gson().fromJson(strCoin, Coin.class);
+            arrKoinFiyatlari.get(i).add(tmpCoin.getPrice());
+
+        }
+        if (arrKoinFiyat1.size() % 10 == 0) {
+
+        }
+        completeTask();
+    }
+
+    private void completeTask() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
